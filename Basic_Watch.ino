@@ -12,6 +12,9 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "RTClib.h"
+#include "Adafruit_BLE.h"
+#include "Adafruit_BluefruitLE_SPI.h"
+#include "BluefruitConfig.h"
 // Slow the cpu clock to save power with the following module
 //#include "cpu.h"
 
@@ -30,6 +33,7 @@
 #define NOTE_CS7 2217
 #define NOTE_D7  2349
 
+Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 RTC_DS3231 rtc;
 
 // Uncomment this block to use hardware SPI
@@ -139,7 +143,16 @@ void setup() {
   //  delay(100); ble.sendCommandCheckOK(F( "AT+BLEMIDIEN=OFF" ));
   //  delay(100); ble.sendCommandCheckOK(F( "AT+GAPSTOPADV" ));
 
+  ble.begin(VERBOSE_MODE);
   rtc.begin();
+
+    // Ble settings
+  //ble.echo(false);
+  //ble.verbose(false);  
+  //ble.factoryReset();
+  //ble.sendCommandCheckOK(F( "AT+GAPDEVNAME=watchX" ));
+  ble.sendCommandCheckOK(F( "AT+BleHIDEn=On"  ));
+  //ble.sendCommandCheckOK(F( "AT+BLEPOWERLEVEL=0" ));
 
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SSD1306_SWITCHCAPVCC);
@@ -223,6 +236,9 @@ void loop() {
     if (KeyPressTone > 0) {
       tone(buzzer, NOTE_D7, KeyPressTone);
     }
+    if(WatchState == 0 || Menu <= 0){
+        ble.sendCommandCheckOK(F("AT+BLEHIDCONTROLKEY=MEDIANEXT"));
+    }
     if (WatchState == 0) {
       wake();
       if (Menu == 0) {
@@ -254,6 +270,9 @@ void loop() {
     previousMillis = millis();
     if (KeyPressTone > 0) {
       tone(buzzer, NOTE_B6, KeyPressTone);
+    }
+    if(WatchState == 0 || Menu <= 0){
+        ble.sendCommandCheckOK(F("AT+BLEHIDCONTROLKEY=MEDIAPREVIOUS"));
     }
     if (WatchState == 0) {
       wake();
